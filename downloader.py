@@ -116,7 +116,10 @@ class DownloaderEngine(Logger, MultiThreadClosing):
                 self.logger.debug("image is already exists. ")
                 return True
             if path and not os.path.exists(path[:path.rfind("/")]):
-                os.makedirs(path[:path.rfind("/")])
+                try:
+                    os.makedirs(path[:path.rfind("/")])
+                except OSError:
+                    pass
             resp = urlopen(url)
             self.logger.debug("the response code is %s. "%resp.code)
             fileobj = open(path, "wb")
