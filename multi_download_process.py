@@ -58,12 +58,12 @@ class MultiDownloadProcess(Logger, MultiThreadClosing):
             for url, filename, path in url_paths:
                 result = getattr(de, downloader)(url=url, filename=filename, path=path)
                 flag = flag or result
+            self.logger.debug("download finished, success:%s"%flag)
+            self.callback(item, flag)
         finally:
             self.de_queue.put(de)
-        self.logger.debug("download finished, success:%s"%flag)
-        self.callback(item, flag)
-        self.threads.remove(current_thread())
-        self.logger.debug("the count of thread which is alive is %s. "%len(self.threads))
+            self.threads.remove(current_thread())
+            self.logger.debug("the count of thread which is alive is %s. "%len(self.threads))
 
     def start(self):
         self.logger.debug("start process %s"%self.name)
