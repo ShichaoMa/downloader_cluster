@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 import json
-from multi_download_process import MultiDownloadProcess
+
+from downloader_cluster.multi_download_process import MultiDownloadProcess
 
 
 class Test(MultiDownloadProcess):

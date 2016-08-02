@@ -1,16 +1,18 @@
 # -*- coding:utf-8 -*-
+import sys
 import hashlib
 import os
 import re
 import traceback
-import requests
+from Queue import Queue, Empty
+from argparse import ArgumentParser, _HelpAction, _SubParsersAction
 from threading import Thread, RLock
 from urllib2 import urlopen, Request
-from argparse import ArgumentParser, _HelpAction, _SubParsersAction
-from Queue import Queue, Empty
-from multi_thread_closing import MultiThreadClosing
-from logger import Logger
+sys.path.append("../tools")
+import requests
+from log_to_kafka import Logger
 
+from MultiThreadClosing.multi_thread_closing import MultiThreadClosing
 
 SEND_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36',

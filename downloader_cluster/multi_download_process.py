@@ -1,13 +1,14 @@
 # -*- coding:utf-8 -*-
 import time
+import sys
 from redis import Redis
-from threading import Thread, current_thread
-from argparse import ArgumentParser
 from Queue import Queue, Empty
+from argparse import ArgumentParser
+from threading import Thread, current_thread
+sys.path.append("../tools")
+from MultiThreadClosing import MultiThreadClosing
+from log_to_kafka import Logger
 from downloader import DownloaderEngine
-from multi_thread_closing import MultiThreadClosing
-from logger import Logger
-
 
 
 class MultiDownloadProcess(Logger, MultiThreadClosing):
@@ -62,7 +63,10 @@ class MultiDownloadProcess(Logger, MultiThreadClosing):
             self.callback(item, flag)
         finally:
             self.de_queue.put(de)
-            self.threads.remove(current_thread())
+            try:
+                self.threads.remove(current_thread())
+            except ValueError:
+                pass
             self.logger.debug("the count of thread which is alive is %s. "%len(self.threads))
 
     def start(self):
@@ -79,6 +83,7 @@ class MultiDownloadProcess(Logger, MultiThreadClosing):
                 self.logger.debug("got no message...")
                 time.sleep(1)
                 continue
+            self.logger.debug("%s tasks  to be continue..."%self.redis_conn.llen(self.settings.get("QUEUE_KEY")))
             url_paths = self.decode(item)
             while True:
                 try:

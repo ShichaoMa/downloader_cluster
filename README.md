@@ -1,14 +1,13 @@
 # downloader_cluster
 一个简单的支持多线程，断点续传及分布式的下载器
 
-
 ubuntu
 
-INSTALL
+# INSTALL
 
     git clone https://github.com/ShichaoMa/downloader_cluster.git
 
-START
+# USAGE
 
     ```
         ubuntu@dev:~/myprojects/downloader_cluster$ python downloader.py -h
