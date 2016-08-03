@@ -1,15 +1,12 @@
 # -*- coding:utf-8 -*-
 import os
-try:
-    import Image
-except:
-    from PIL import Image
 import re
 import traceback
 import json
 import subprocess
 from functools import wraps
 from log_to_kafka import Logger
+
 
 
 def exception_wrapper(func):
@@ -27,6 +24,7 @@ class ImageConvert(Logger):
 
     name = "image_convert"
     g_requre_images_count = 6
+    size_pattern = re.compile("\s(\d+)x(\d+)\s")
 
     def __init__(self, settings):
         super(ImageConvert, self).__init__(settings)
@@ -44,17 +42,6 @@ class ImageConvert(Logger):
             if i['url'] == url:
                 return i['path']
         self.logger.error("[error]: %s is not download!" % url)
-
-    def get_image_size(self, image_src):
-        try:
-            image = Image.open(image_src)
-        except IOError:
-            if IOError.errno == 2:
-                self.logger.error('[error]: open %s error. No such file or directory!' % image_src)
-            else:
-                self.logger.error('[error]: open %s error.' % image_src)
-            raise
-        return image.size
 
     # 把原始图片缩放至800x800,缺失部分以白色填充
     def convert_to_800x800(self, image_src, image_dest):
@@ -75,33 +62,29 @@ class ImageConvert(Logger):
         self.convert_to(image_src, image_src[:image_src.find('.')] + '_150.jpg', 150, 150)
 
     # 从中心截取 二分之一，缩放至 width x height
-    def clip_center_50_percent_scale_to(self, image_src, image_dest, width, height):
+    def clip_center_50_percent_scale_to(self, image_src, image_dest, width, height, w, h):
         try:
-            w, h = self.get_image_size(image_src)
             self.clip_scale_to(image_src, image_dest, width, height, "center", 0, 0, w / 2, h / 2)
         except IOError:
             self.logger.error("%s clip_center_50_percent_scale_to_800x800 error!" % image_src)
 
     # 从左上角截取四分之三，缩放至800x800
-    def clip_north_west_75_percent_scale_to(self, image_src, image_dest, width, height):
+    def clip_north_west_75_percent_scale_to(self, image_src, image_dest, width, height, w, h):
         try:
-            w, h = self.get_image_size(image_src)
             self.clip_scale_to(image_src, image_dest, width, height, "center", 0 - w / 8, 0 - h / 8, w - w / 4, h - h / 4)
         except IOError:
             self.logger.error("%s clip_north_west_75_percent_scale_to_800x800 error!" % image_src)
 
     # 从右下角截取四分之三，缩放至800x800
-    def clip_south_east_75_percent_scale_to(self, image_src, image_dest, width, height):
+    def clip_south_east_75_percent_scale_to(self, image_src, image_dest, width, height, w, h):
         try:
-            w, h = self.get_image_size(image_src)
             self.clip_scale_to(image_src, image_dest, width, height, "center", w / 8, h / 8, w - w / 4, h - h / 4)
         except IOError:
             self.logger.error("%s clip_south_east_75_percent_scale_to_800x800 error!" % image_src)
 
     # 截取左侧或者上侧两个正方形（以较短边为边长），缩放至800x800
-    def clip_west_or_north_scale_to(self, image_src, image_dest, width, height):
+    def clip_west_or_north_scale_to(self, image_src, image_dest, width, height, w, h):
         try:
-            w, h = self.get_image_size(image_src)
             # 宽大于高
             if w > h:
                 if h > (w / 2):
@@ -132,9 +115,8 @@ class ImageConvert(Logger):
             self.logger.error("%s clip_west_or_north_scale_to_800x800 error!" % image_src)
 
     # 截取右侧下侧两个正方形（以较短边为边长），缩放至800x800
-    def clip_east_or_south_scale_to(self, image_src, image_dest, width, height):
+    def clip_east_or_south_scale_to(self, image_src, image_dest, width, height, w, h):
         try:
-            w, h = self.get_image_size(image_src)
             if w > h:
                 if h > (w / 2):
                     clip_width = w / 2
@@ -173,15 +155,15 @@ class ImageConvert(Logger):
         if not os.path.exists(image_src):
             self.logger.error("%s does not exist!" % image_src)
             return
-
+        w, h = map(lambda x:int(x), self.size_pattern.search(os.popen("identify %s"%image_src).read()).groups())
         for i in range(n):
-            self.image_funcs[i](image_src, image_src[:image_src.find('.')] + '_800_' + str(i + 1) + '.jpg', 800, 800)
-            self.image_funcs[i](image_src, image_src[:image_src.find('.')] + '_150_' + str(i + 1) + '.jpg', 150, 150)
+            self.image_funcs[i](image_src, image_src[:image_src.find('.')] + '_800_' + str(i + 1) + '.jpg', 800, 800, w, h)
+            self.image_funcs[i](image_src, image_src[:image_src.find('.')] + '_150_' + str(i + 1) + '.jpg', 150, 150, w, h)
 
 
     def convert_to(self, image_src, image_dest, dest_width, dest_height):
         if os.path.exists(image_dest):
-            self.logger.info("%s is already exist." % image_dest)
+            self.logger.debug("%s is already exist." % image_dest)
         else:
             cmd = 'convert {0} -thumbnail "{2}x{3}" -background white -gravity center -extent {2}x{3} {1}'.format(
                 image_src, image_dest, dest_width, dest_height)
@@ -193,7 +175,7 @@ class ImageConvert(Logger):
     # 裁剪并缩放
     def clip_scale_to(self, image_src, image_dest, dest_width, dest_height, origin, x, y, clip_width, clip_height):
         if os.path.exists(image_dest):
-            self.logger.info("%s is already exists." % image_dest)
+            self.logger.debug("%s is already exists." % image_dest)
         else:
             cmd = 'convert {0}  -gravity {4} -crop {7}x{8}{5:+d}{6:+d} -resize {2}x{3} -extent {2}x{3} {1}'.format(
                 image_src, image_dest, dest_width, dest_height, origin, x, y, clip_width, clip_height)

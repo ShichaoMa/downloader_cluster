@@ -122,12 +122,11 @@ class DownloaderEngine(Logger, MultiThreadClosing):
                     os.makedirs(path[:path.rfind("/")])
                 except OSError:
                     pass
-            resp = urlopen(url)
-            self.logger.debug("the response code is %s. "%resp.code)
-            fileobj = open(path, "wb")
-            fileobj.write(resp.read())
-            fileobj.close()
-            self.logger.debug("finish download. ")
+            resp = requests.get(url=url, headers=SEND_HEADERS, stream=True)
+            with open(path, "wb") as f:
+                for chunk in resp.iter_content(chunk_size=1024):
+                    f.write(chunk)
+                    f.flush()
             return True
         except Exception:
             self.logger.error(traceback.format_exc())

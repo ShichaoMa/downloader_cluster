@@ -21,7 +21,7 @@ class ImageConvertProcess(MultiDownloadProcess):
         self.kafka_client = KafkaClient(self.settings.get("KAFKA_HOSTS"))
         self.kafka_client.ensure_topic_exists(self.topic_name)
         self.producer = SimpleProducer(self.kafka_client)
-        self.lock = RLock()
+        #self.lock = RLock()
         self.IC = ImageConvert(settings)
         self.IC.set_logger(self.logger)
 
@@ -30,19 +30,18 @@ class ImageConvertProcess(MultiDownloadProcess):
 
     def callback(self, item, flag):
         #print "download finish. flag:%s"%flag
-        with self.lock:
-            if flag:
-                item = json.loads(item)
-                self.logger.debug("process in pan. ")
-                if item.get("meta", {}).get("spiderid") != "loco_amazon":
-                    item["pan_result"] = self.IC.process_image(item.get("meta", {}).get("collection_name"), item)
-                    self.logger.debug("finish process in pan, result:%s"%item["pan_result"])
-                else:
-                    self.logger.info("ignore loco_amazon images. ")
-                self.producer.send_messages(self.topic_name, json.dumps(item))
-                self.logger.debug("send item to kafka. ")
+        if flag:
+            item = json.loads(item)
+            self.logger.debug("process in pan. ")
+            if item.get("meta", {}).get("spiderid") != "loco_amazon":
+                item["pan_result"] = self.IC.process_image(item.get("meta", {}).get("collection_name"), item)
+                self.logger.debug("finish process in pan, result:%s"%item["pan_result"])
             else:
-                self.logger.error("download failed")
+                self.logger.info("ignore loco_amazon images. ")
+            self.producer.send_messages(self.topic_name, json.dumps(item))
+            self.logger.debug("send item to kafka. ")
+        else:
+            self.logger.error("download failed")
 
 if __name__ == "__main__":
     IC = ImageConvertProcess.parse_args()

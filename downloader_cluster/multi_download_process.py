@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 import time
 import sys
+import traceback
 from redis import Redis
 from Queue import Queue, Empty
 from argparse import ArgumentParser
@@ -56,18 +57,23 @@ class MultiDownloadProcess(Logger, MultiThreadClosing):
             downloader = "start"
         flag = False
         try:
-            for url, filename, path in url_paths:
+            t1 = time.time()
+            length = len(url_paths)
+            for index, (url, filename, path) in enumerate(url_paths):
                 result = getattr(de, downloader)(url=url, filename=filename, path=path)
+                self.logger.info("download process %s/%s completed"%(index+1, length))
                 flag = flag or result
-            self.logger.debug("download finished, success:%s"%flag)
-            self.callback(item, flag)
-        finally:
+            t2 = time.time()
+            self.logger.info("download finished, success:%s, seconds:%.4f"%(flag,  t2-t1))
             self.de_queue.put(de)
+            self.callback(item, flag)
+            self.logger.info("callback finished, seconds:%.4f"%(time.time()-t2))
+        finally:
             try:
                 self.threads.remove(current_thread())
             except ValueError:
                 pass
-            self.logger.debug("the count of thread which is alive is %s. "%len(self.threads))
+            self.logger.info("the count of thread which alives is %s. "%len(self.threads))
 
     def start(self):
         self.logger.debug("start process %s"%self.name)
@@ -84,12 +90,17 @@ class MultiDownloadProcess(Logger, MultiThreadClosing):
                 time.sleep(1)
                 continue
             self.logger.debug("%s tasks  to be continue..."%self.redis_conn.llen(self.settings.get("QUEUE_KEY")))
-            url_paths = self.decode(item)
-            while True:
+            try:
+                url_paths = self.decode(item)
+            except Exception:
+                self.logger.error(traceback.format_exc())
+                url_paths = []
+            while url_paths:
                 try:
                     DE = self.de_queue.get_nowait()
                     th = Thread(target=self.processing, args=(DE, url_paths, item))
                     self.set_force_interrupt(th)
+                    self.logger.debug("start a new thread. ")
                     th.start()
                 except Empty:
                     time.sleep(1)
