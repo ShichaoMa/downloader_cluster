@@ -1,7 +1,8 @@
 # -*- coding:utf-8 -*-
 import json
-
-from downloader_cluster.multi_download_process import MultiDownloadProcess
+import sys
+sys.path.append("../tools")
+from multi_download_process import MultiDownloadProcess
 
 
 class Test(MultiDownloadProcess):
