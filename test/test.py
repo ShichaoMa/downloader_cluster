@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 import json
 import sys
-sys.path.append("../tools")
+sys.path.append("../downloader_cluster")
 from multi_download_process import MultiDownloadProcess
 
 
