@@ -4,6 +4,7 @@ import re
 import traceback
 import json
 import subprocess
+import itertools
 from functools import wraps
 from log_to_kafka import Logger
 
@@ -258,6 +259,30 @@ class ImageConvert(Logger):
                 self._process_one_color_images_amazon(images, color_images[one_color_images])
         return True
 
+    def _process_color_images_backcountrys(self, document):
+        images = document['images']
+        color_images = {}
+        map(lambda x:color_images.setdefault(re.search(r"/([^/_]+)[^/]*?\.jpg", x["url"]).group(1), []).append(x), images)
+        # 处理每种颜色
+        for color, one_color_images in color_images.items():
+            self._process_one_color_images_backcountrys(one_color_images)
+        return True
+
+    def _process_one_color_images_backcountrys(self, one_color_images):
+        same_color_images_count = 0
+        find_images = []
+        for image in one_color_images:
+            if os.path.exists(image["path"]):
+                find_images.append(image)
+                self.convert_to_800x800_and_640x640_and_150x150(image["path"])
+                same_color_images_count += 1
+
+        if find_images:
+            image_variant_main_file_name = find_images[0]["path"]
+            self.provide_n_images(image_variant_main_file_name, self.g_requre_images_count - same_color_images_count)
+        else:
+            self.logger.info("no images found")
+
     def _process_color_images_ralphlaurens(self, document):
         images = document['images']
         color_map = json.loads(document.get('color_map', "[]"))
@@ -380,9 +405,6 @@ class ImageConvert(Logger):
         return self._process_color_images_only_image_urls(document)
 
     def _process_color_images_watchcos(self, document):
-        return self._process_color_images_only_image_urls(document)
-
-    def _process_color_images_backcountrys(self, document):
         return self._process_color_images_only_image_urls(document)
 
     def _process_color_images_blueflys(self, document):

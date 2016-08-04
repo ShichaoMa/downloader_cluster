@@ -1,8 +1,6 @@
 # -*- coding:utf-8 -*-
 import sys
 import json
-from threading import  RLock
-
 from kafka.client import KafkaClient
 from kafka.producer import SimpleProducer
 sys.path.append("../downloader_cluster")
