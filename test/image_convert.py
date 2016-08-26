@@ -285,14 +285,13 @@ class ImageConvert(Logger):
 
     def _process_color_images_ralphlaurens(self, document):
         images = document['images']
-        color_map = json.loads(document.get('color_map', "[]"))
-
+        color_map  = document.get('color_map', "[]")
         for color in color_map.values():
             self._process_one_color_images_ralphlaurens(color, images)
         return True
 
     def _process_one_color_images_ralphlaurens(self, color, images):
-        regx = re.complie(color)
+        regx = re.compile(color)
         find_images = []
         same_color_images_count = 0
         for image in images:

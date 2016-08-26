@@ -1,11 +1,13 @@
 # -*- coding:utf-8 -*-
 import sys
+import traceback
 import json
 from kafka.client import KafkaClient
 from kafka.producer import SimpleProducer
 sys.path.append("../downloader_cluster")
 from multi_download_process import MultiDownloadProcess
 from image_convert import ImageConvert
+from global_constant import DOMAINS
 
 
 class ImageConvertProcess(MultiDownloadProcess):
@@ -27,19 +29,23 @@ class ImageConvertProcess(MultiDownloadProcess):
         return map(lambda x:(x.get('url'), x.get('filename'), x.get('path')), json.loads(item)["images"])
 
     def callback(self, item, flag):
-        #print "download finish. flag:%s"%flag
-        if flag:
-            item = json.loads(item)
-            self.logger.debug("process in pan. ")
-            if item.get("meta", {}).get("spiderid") != "loco_amazon":
-                item["pan_result"] = self.IC.process_image(item.get("meta", {}).get("collection_name"), item)
-                self.logger.debug("finish process in pan, result:%s"%item["pan_result"])
+        try:
+            if flag:
+                item = json.loads(item)
+                spider = item.get("meta", {}).get("spiderid")
+                if spider in DOMAINS:
+                    self.logger.debug("process in pan. spider:%s" % (spider))
+                    item["pan_result"] = self.IC.process_image(item.get("meta", {}).get("collection_name"), item)
+                    self.logger.debug("finish process in pan, spider:%s result:%s"%(spider, item["pan_result"]))
+                else:
+                    self.logger.info("ignore %s images. "%spider)
+                self.producer.send_messages(self.topic_name, json.dumps(item))
+                self.logger.debug("send item to kafka. ")
             else:
-                self.logger.info("ignore loco_amazon images. ")
-            self.producer.send_messages(self.topic_name, json.dumps(item))
-            self.logger.debug("send item to kafka. ")
-        else:
-            self.logger.error("download failed")
+                self.logger.error("download failed")
+        except Exception:
+            self.logger.error(traceback.format_exc())
+
 
 if __name__ == "__main__":
     IC = ImageConvertProcess.parse_args()

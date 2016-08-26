@@ -68,6 +68,8 @@ class MultiDownloadProcess(Logger, MultiThreadClosing):
             self.de_queue.put(de)
             self.callback(item, flag)
             self.logger.info("callback finished, seconds:%.4f"%(time.time()-t2))
+        except Exception:
+            self.logger.error(traceback.format_exc())
         finally:
             try:
                 self.threads.remove(current_thread())

@@ -130,6 +130,8 @@ class DownloaderEngine(Logger, MultiThreadClosing):
             return True
         except Exception:
             self.logger.error(traceback.format_exc())
+            if os.path.exists(path):
+                os.remove(path)
             return False
 
     def start(self, url=None, filename=None, path=None):
