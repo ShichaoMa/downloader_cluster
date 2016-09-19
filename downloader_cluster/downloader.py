@@ -117,9 +117,14 @@ class DownloaderEngine(Logger, MultiThreadClosing):
             if os.path.exists(path):
                 self.logger.debug("image is already exists. ")
                 return True
-            if path and not os.path.exists(path[:path.rfind("/")]):
+            if filename:
+                path = os.path.join(path, filename)
+            index = path.rfind("/")
+            if index == -1:
+                index = path.rfind("\\")
+            if path and not os.path.exists(path[:index]):
                 try:
-                    os.makedirs(path[:path.rfind("/")])
+                    os.makedirs(path[:index])
                 except OSError:
                     pass
             resp = requests.get(url=url, headers=SEND_HEADERS, stream=True)
