@@ -12,6 +12,10 @@ ubuntu
     git clone https://github.com/ShichaoMa/downloader_cluster.git
     sudo python setup.py install
 
+    or
+
+    sudo pip install downloader-cluster
+
 USAGE
 >>>>>
 ::

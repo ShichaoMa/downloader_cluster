@@ -4,7 +4,12 @@
 # INSTALL
 ## ubuntu
 ```bash
-git clone https://github.com/ShichaoMa/downloader_cluster.git
+    git clone https://github.com/ShichaoMa/downloader_cluster.git
+    sudo python setup.py install
+
+    or 
+
+    sudo pip install downloader-cluster
 ```
 #USAGE
 ```bash
