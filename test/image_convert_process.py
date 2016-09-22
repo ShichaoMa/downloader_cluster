@@ -1,11 +1,12 @@
 # -*- coding:utf-8 -*-
-import sys
-import traceback
 import json
+import traceback
+
 from kafka.client import KafkaClient
 from kafka.producer import SimpleProducer
-sys.path.append("../downloader_cluster")
-from multi_download_process import MultiDownloadProcess
+
+from downloader_cluster import MultiDownloadProcess
+
 from image_convert import ImageConvert
 from global_constant import DOMAINS
 

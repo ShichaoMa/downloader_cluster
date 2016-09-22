@@ -1,14 +1,15 @@
 # -*- coding:utf-8 -*-
 import time
-import sys
 import traceback
+
 from redis import Redis
 from Queue import Queue, Empty
 from argparse import ArgumentParser
 from threading import Thread, current_thread
-sys.path.append("../tools")
-from MultiThreadClosing import MultiThreadClosing
+
+from multi_thread_closing import MultiThreadClosing
 from log_to_kafka import Logger
+
 from downloader import DownloaderEngine
 
 

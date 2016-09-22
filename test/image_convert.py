@@ -4,7 +4,6 @@ import re
 import traceback
 import json
 import subprocess
-import itertools
 from functools import wraps
 from log_to_kafka import Logger
 

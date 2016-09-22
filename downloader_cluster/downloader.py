@@ -1,18 +1,18 @@
 # -*- coding:utf-8 -*-
-import sys
-import hashlib
 import os
 import re
+import hashlib
+import requests
 import traceback
+
 from Queue import Queue, Empty
 from argparse import ArgumentParser, _HelpAction, _SubParsersAction
 from threading import Thread, RLock
 from urllib2 import urlopen, Request
-sys.path.append("../tools")
-import requests
-from log_to_kafka import Logger
 
-from MultiThreadClosing.multi_thread_closing import MultiThreadClosing
+from log_to_kafka import Logger
+from multi_thread_closing import MultiThreadClosing
+
 
 SEND_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36',
@@ -106,16 +106,16 @@ class DownloaderEngine(Logger, MultiThreadClosing):
         except:
             pass
         try:
-            total = int(r.headers['Content-Length'])
+            total = int(r.headers.get('Content-Length', 0))
         except:
-            self.logger.error("message got 0. ")
+            #self.logger.error("message got 0. ")
             exit(0)
         return total, False
 
-    def download_small_file(self, url, filename, path):
+    def download_small_file(self, url, filename, path="."):
         try:
             if os.path.exists(path):
-                self.logger.debug("image is already exists. ")
+                self.logger.debug("file is already exists. ")
                 return True
             if filename:
                 path = os.path.join(path, filename)
@@ -142,7 +142,7 @@ class DownloaderEngine(Logger, MultiThreadClosing):
     def start(self, url=None, filename=None, path=None):
         self.logger.debug("start download. ")
         self.url = url or self.url
-        self.filename = filename or self.filename
+        self.filename = filename or self.filename or self.url[self.url.rfind("/")+1:]
         if path and not os.path.exists(path[:path.rfind("/")]):
             os.makedirs(path[:path.rfind("/")])
         self.dir = self.dir or self.settings.get("DIR")
@@ -150,6 +150,9 @@ class DownloaderEngine(Logger, MultiThreadClosing):
             os.mkdir(self.dir)
         self.logger.debug("filename is %s"%(self.filename or path))
         content_length, flag = self.support_continue(self.url)
+        if not content_length:
+            self.download_small_file(self.url, None, os.path.join(self.dir, self.filename))
+            return
         self.logger.debug("the file %s is %.2fk. "%(self.url, content_length/(1024)))
         average_size = content_length/self.settings.get("THREAD_COUNT", 1)
         min_size = self.settings.get("MIN_SIZE", 1024000)
@@ -265,7 +268,7 @@ class DownloaderEngine(Logger, MultiThreadClosing):
         base_parser = ArgumentParser(add_help=False)
         base_parser.add_argument("-s", "--settings", dest="settings", default="settings.py")
         base_parser.add_argument("-u", "--url", dest="url", required=True)
-        base_parser.add_argument("-f", "--filename", dest="filename", required=True)
+        base_parser.add_argument("-f", "--filename", dest="filename")
         sub_parser = parser.add_subparsers(dest="cmd")
         sub_parser.add_parser("start", parents=[base_parser], help="start download a file. ")
         sub_parser.add_parser("reload", parents=[base_parser], help="continue downlaod a file. ")

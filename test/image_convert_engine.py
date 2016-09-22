@@ -1,13 +1,11 @@
 # -*- coding:utf-8 -*-
-import sys
 from argparse import ArgumentParser
-
 from pymongo import MongoClient
 from pymongo.errors import CursorNotFound
 
-sys.path.append("../tools")
 from log_to_kafka import Logger
-from MultiThreadClosing import MultiThreadClosing
+from downloader_cluster import MultiThreadClosing
+
 from global_constant import G_ALL_DOMAINS, G_DICT_QUERY_PARAMETER
 from image_convert import ImageConvert
 

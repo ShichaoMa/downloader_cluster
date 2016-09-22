@@ -1,8 +1,7 @@
 # -*- coding:utf-8 -*-
-import sys
 import json
-sys.path.append("../downloader_cluster")
-from multi_download_process import MultiDownloadProcess
+
+from downloader_cluster import MultiDownloadProcess
 
 
 class ImageDownloadProcess(MultiDownloadProcess):
