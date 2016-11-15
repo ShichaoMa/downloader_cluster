@@ -3,7 +3,7 @@ from .downloader import DownloaderEngine
 from multi_download_process import MultiDownloadProcess
 
 
-VERSION = '1.0.3'
+VERSION = '1.0.4'
 
 AUTHOR = "cn"
 

@@ -1,6 +1,5 @@
 # -*- coding:utf-8 -*-
 import time
-import socket
 import traceback
 
 from Queue import Queue, Empty
@@ -93,8 +92,8 @@ class MultiDownloadProcess(Logger, MultiThreadClosing):
         while self.alive:
             try:
                 item = self.redis_conn.lpop(self.settings.get("QUEUE_KEY"))
-            except socket.timeout:
-                self.logger.error("redis timeout error %s"%traceback.format_exc())
+            except Exception:
+                self.logger.error("redis error %s"%traceback.format_exc())
                 item = None
             if not item:
                 self.logger.debug("got no message...")

@@ -6,7 +6,7 @@ try:
 except:
     from distutils.core import setup
 
-VERSION = '1.0.3'
+VERSION = '1.0.4'
 
 AUTHOR = "cn"
 
@@ -52,7 +52,7 @@ setup(
     url = URL,
     license = LICENSE,
     packages = PACKAGES,
-    install_requires=["multi-thread-closing", "log-to-kafka"],
+    install_requires=["multi-thread-closing", "log-to-kafka", "custom-redis"],
     include_package_data=True,
     zip_safe=True,
 )
