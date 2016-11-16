@@ -42,7 +42,7 @@ class ArgparseHelper(_HelpAction):
 class Downloader(Thread):
 
     def __init__(self, url, lock, start, end, fileobj, temp_file,
-                 engine, queue, total_size, continue_support, buffer_size=102400):
+                 engine, queue, total_size, continue_support, timeout, buffer_size=102400):
         super(Downloader, self).__init__()
         self.engine = engine
         self.temp_file = temp_file
@@ -57,7 +57,7 @@ class Downloader(Thread):
         headers = SEND_HEADERS.copy()
         headers["Range"] = "bytes=%s-%s"%(self.start_, self.end)
         req = Request(url, headers=headers)
-        self.downloader = urlopen(req)
+        self.downloader = urlopen(req, timeout=timeout)
 
     def run(self):
         data = self.downloader.read(self.buffer_size)
@@ -98,8 +98,9 @@ class DownloaderEngine(Logger, MultiThreadClosing):
             'Range': 'bytes=0-4'
         }
         r = None
+        total = 0
         try:
-            r = requests.get(url, headers=send_headers)
+            r = requests.get(url, headers=send_headers, timeout=self.settings.get("DOWNLOAD_TIMEOUT", 30))
             crange = r.headers['content-range']
             total = int(re.match(ur'^bytes 0-4/(\d+)$', crange).group(1))
             return total, True
@@ -127,7 +128,7 @@ class DownloaderEngine(Logger, MultiThreadClosing):
                     os.makedirs(path[:index])
                 except OSError:
                     pass
-            resp = requests.get(url=url, headers=SEND_HEADERS, stream=True)
+            resp = requests.get(url=url, headers=SEND_HEADERS, stream=True, timeout=self.settings.get("DOWNLOAD_TIMEOUT", 30))
             with open(path, "wb") as f:
                 for chunk in resp.iter_content(chunk_size=1024):
                     f.write(chunk)
@@ -176,7 +177,7 @@ class DownloaderEngine(Logger, MultiThreadClosing):
             th = Downloader(self.url, self.lock,
                             i * average_size,
                             "" if i == thread_count-1 else (i+1)*average_size,
-                            fileobj, temp_file, self, self.queue, content_length, flag)
+                            fileobj, temp_file, self, self.queue, content_length, flag, self.settings.get("DOWNLOAD_TIMEOUT", 30))
             thread_list.append(th)
             th.start()
             self.logger.debug("start thread %s"%th.getName())
