@@ -23,6 +23,7 @@ DOMAINS = [
     'nordstrom',
     'newegg',
     'onlineshoes',
+    'vitaminworld',
 ]
 
 

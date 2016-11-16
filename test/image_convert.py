@@ -444,3 +444,4 @@ class ImageConvert(Logger):
     def _process_color_images_neweggs(self, document):
         return self._process_color_images_only_image_urls(document)
 
+

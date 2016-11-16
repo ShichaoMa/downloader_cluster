@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 
-MONGODB_SERVER = "192.168.200.120"
+MONGODB_SERVER = "192.168.200.90"
 
 # 分布式下载时，监听的redis list 的 key
 QUEUE_KEY = "download_url_queue"

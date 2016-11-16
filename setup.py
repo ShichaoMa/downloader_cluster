@@ -6,8 +6,18 @@ try:
 except:
     from distutils.core import setup
 
-from downloader_cluster import AUTHOR, AUTHOR_EMAIL, VERSION, URL, NAME, DESCRIPTION
 
+VERSION = '1.0.3'
+
+AUTHOR = "cn"
+
+AUTHOR_EMAIL = "308299269@qq.com"
+
+URL = "https://www.github.com/ShichaoMa/downloader_cluster"
+
+NAME = "downloader-cluster"
+
+DESCRIPTION = "一个简单的支持多线程，断点续传及分布式的下载器。 "
 
 def read(fname):
     return codecs.open(os.path.join(os.path.dirname(__file__), fname)).read()
