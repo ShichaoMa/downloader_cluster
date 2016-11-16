@@ -2,7 +2,6 @@
 import time
 import traceback
 
-from redis import Redis
 from Queue import Queue, Empty
 from argparse import ArgumentParser
 from threading import Thread, current_thread
@@ -23,6 +22,10 @@ class MultiDownloadProcess(Logger, MultiThreadClosing):
         self.set_logger()
         MultiThreadClosing.__init__(self)
         self.de_queue = Queue()
+        if self.settings.get("CUSTOM_REDIS"):
+            from custom_redis.client import Redis
+        else:
+            from redis import Redis
         self.redis_conn = Redis(self.settings.get("REDIS_HOST"),
                                 self.settings.get("REDIS_PORT"))
         self.small = False
@@ -87,7 +90,11 @@ class MultiDownloadProcess(Logger, MultiThreadClosing):
             self.de_queue.put(DE)
         self.logger.debug("setup %s des"%concurrent_download_count)
         while self.alive:
-            item = self.redis_conn.lpop(self.settings.get("QUEUE_KEY"))
+            try:
+                item = self.redis_conn.lpop(self.settings.get("QUEUE_KEY"))
+            except Exception:
+                self.logger.error("redis error %s"%traceback.format_exc())
+                item = None
             if not item:
                 self.logger.debug("got no message...")
                 time.sleep(1)
