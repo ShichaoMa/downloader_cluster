@@ -109,13 +109,12 @@ class DownloaderEngine(Logger, MultiThreadClosing):
         try:
             total = int(r.headers.get('Content-Length', 0))
         except:
-            #self.logger.error("message got 0. ")
             exit(0)
         return total, False
 
     def download_small_file(self, url, filename, path="."):
         try:
-            if os.path.exists(path):
+            if os.path.exists(path) and os.path.getsize(path):
                 self.logger.debug("file is already exists. ")
                 return True
             if filename:
@@ -133,7 +132,10 @@ class DownloaderEngine(Logger, MultiThreadClosing):
                 for chunk in resp.iter_content(chunk_size=1024):
                     f.write(chunk)
                     f.flush()
-            return True
+            if os.path.getsize(path):
+                return True
+            else:
+                return False
         except Exception:
             self.logger.error(traceback.format_exc())
             if os.path.exists(path):
